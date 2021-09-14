@@ -3,7 +3,7 @@
 ## 运行环境
 
 ```
-Author:wangwe&liuzihao
+Author:wangwei&liuzihao
 Date:2021-4-9
 CentOS Linux release 7.8.2003 (Core)	
 Architecture:          x86_64
