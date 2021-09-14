@@ -33,7 +33,7 @@ class Sumarrize_Variant:
     
     def get_filter_variant_data(self,sample_name):
         
-        df_filter = glob.glob(f"{self.data_dir}/{sample_name}/07.variant_calling/*_filter_variant_count.tsv")[0]
+        df_filter,*other = glob.glob(f"{self.data_dir}/{sample_name}/07.variant_calling/*_filter_variant_count.tsv")
         return df_filter
     
     def get_protein_value(self,sample_name):
@@ -44,7 +44,7 @@ class Sumarrize_Variant:
         3   no_detect
         ......
         """
-        protein_value = glob.glob(f"{self.data_dir}/{sample_name}/08.analysis_snp/*_variant_table.tsv")[0]
+        protein_value,*other = glob.glob(f"{self.data_dir}/{sample_name}/08.analysis_snp/*_variant_table.tsv")
         df_protein_value = pd.read_table(protein_value).loc[:,["VID","Protein"]].fillna("no_detect")
 
         return df_protein_value
@@ -95,6 +95,6 @@ class Sumarrize_Variant:
                     vid_summarize.to_csv(f'{self.results_dir}/{sample}_summarize_capture_vid.tsv', sep='\t', index=False)
                     self.log.write(f"{sample}\tSuccess\n")
             except:
-                self.log.write(f"{sample}\tFailure\n")
+                    self.log.write(f"{sample}\tFailure\n")
 
 
