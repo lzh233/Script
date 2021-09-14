@@ -16,9 +16,9 @@
 
 ```shell
 #方法1
-bash 01.rename_Seqence.sh
+bash rename_Seqence.sh
 #方法2
 chmod 755 
-./01.rename_Seqence.sh
+./rename_Seqence.sh
 ```
 
