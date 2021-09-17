@@ -1,0 +1,63 @@
+{
+    "sample_summary": {
+        "Sample ID": "snp",
+        "Assay": "Single-cell variant",
+        "Chemistry": "scopeV2.2.1",
+        "Software Version": "1.4.1"
+    },
+    "barcode_summary": {
+        "Raw Reads": 25593,
+        "Valid Reads": 25593,
+        "Valid Reads Fraction": 1.0,
+        "Q30 of Barcodes": 0.9581,
+        "Q30 of UMIs": 0.8956
+    },
+    "cutadapt_summary": {
+        "Reads with Adapters": 4662,
+        "Reads with Adapters Fraction": 0.182,
+        "Reads too Short": 154,
+        "Reads too Short Fraction": 0.006,
+        "Reads Written": 25439,
+        "Reads Written Fraction": 0.994,
+        "Base Pairs Processed": 3838950,
+        "Base Pairs Quality-Trimmed": 49875,
+        "Base Pairs Quality-Trimmed Fraction": 0.013,
+        "Base Pairs Written": 3534644,
+        "Base Pairs Written Fraction": 0.921
+    },
+    "consensus_summary": {
+        "UMI Counts": 1662,
+        "Mean UMI Length": 141.42,
+        "Ambiguous Base Counts": 4113,
+        "Ambiguous Base Counts Fraction": 0.0175
+    },
+    "star_summary": {
+        "Genome": "Homo_sapiens_ensembl_99",
+        "Uniquely Mapped UMIs": 1430,
+        "Uniquely Mapped UMIs Fraction": 0.8604,
+        "Multi-Mapped UMIs": 90,
+        "Multi-Mapped UMIs Fraction": 0.0542,
+        "Base Pairs Mapped to Exonic Regions": 190205,
+        "Base Pairs Mapped to Exonic Regions Fraction": 0.9976,
+        "Base Pairs Mapped to Intronic Regions": 458,
+        "Base Pairs Mapped to Intronic Regions Fraction": 0.0024,
+        "Base Pairs Mapped to Intergenic Regions": 0,
+        "Base Pairs Mapped to Intergenic Regions Fraction": 0.0
+    },
+    "featureCounts_summary": {
+        "Assigned": 1385,
+        "Assigned Fraction": 0.9685,
+        "Unassigned_NoFeatures": 5,
+        "Unassigned_NoFeatures Fraction": 0.0035,
+        "Unassigned_Ambiguity": 40,
+        "Unassigned_Ambiguity Fraction": 0.028
+    },
+    "target_metrics_summary": {
+        "Number of Target Genes": 9,
+        "Enriched Reads": 252,
+        "Enriched Reads Fraction": 0.1819,
+        "Enriched Reads in Cells": 252,
+        "Enriched Reads in Cells Fraction": 0.1819,
+        "Median Enriched Reads per Cell": 45.0
+    }
+}

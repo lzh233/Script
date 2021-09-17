@@ -1,0 +1,6 @@
+cosmic70	ID=COSM249860;OCCURENCE=1(large_intestine),25(urinary_tract),1(skin),1(thyroid)	11	534242	534242	A	G	11	534242	.	A	G	.	.	VID=1;CID=185,916	GT	1/1
+cosmic70	ID=COSM28540;OCCURENCE=2(thyroid),1(large_intestine)	3	179218234	179218234	G	A	3	179218234	.	G	A	.	.	VID=3;CID=231	GT	1/1
+cosmic70	ID=COSM26491;OCCURENCE=1(skin)	7	140753333	140753333	T	A	7	140753333	.	T	A	.	.	VID=6;CID=213	GT	1/1
+cosmic70	ID=COSM1451600;OCCURENCE=1(large_intestine),1(breast)	7	55181370	55181370	G	A	7	55181370	.	G	A	.	.	VID=10;CID=85,185,213,231,916	GT	1/1
+cosmic70	ID=COSM6240;OCCURENCE=1(biliary_tract),1(large_intestine),1(soft_tissue),341(lung),2(upper_aerodigestive_tract),1(central_nervous_system)	7	55181378	55181378	C	T	7	55181378	.	C	T	.	.	VID=11;CID=85,185,213,231,916	GT	1/1
+cosmic70	ID=COSM6224;OCCURENCE=12(breast),2(large_intestine),1(prostate),1(ovary),2138(lung),1(peritoneum),4(thyroid),1(thymus),1(stomach),1(upper_aerodigestive_tract)	7	55191822	55191822	T	G	7	55191822	.	T	G	.	.	VID=12;CID=85,185,213,231,916	GT	1/1

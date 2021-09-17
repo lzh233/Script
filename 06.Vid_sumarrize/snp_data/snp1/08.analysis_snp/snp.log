@@ -1,0 +1,12 @@
+ANNOVAR Version:
+	$Date: 2018-04-16 00:43:31 -0400 (Mon, 16 Apr 2018) $
+ANNOVAR Information:
+	For questions, comments, documentation, bug reports and program update, please visit http://www.openbioinformatics.org/annovar/
+ANNOVAR Command:
+	/Public/Software/annovar/annotate_variation.pl -filter -dbtype cosmic70 -buildver hg38 -outfile .//snp/08.analysis_snp/snp .//snp/08.analysis_snp/snp.input /SGRNJ/Database/script/database/annovar/humandb
+ANNOVAR Started:
+	Thu Sep  9 15:55:24 2021
+NOTICE: Variants matching filtering criteria are written to .//snp/08.analysis_snp/snp.hg38_cosmic70_dropped, other variants are written to .//snp/08.analysis_snp/snp.hg38_cosmic70_filtered
+NOTICE: Processing next batch with 17 unique variants in 17 input lines
+NOTICE: Database index loaded. Total number of bins is 232328 and the number of bins to be scanned is 8
+NOTICE: Scanning filter database /SGRNJ/Database/script/database/annovar/humandb/hg38_cosmic70.txt...Done
