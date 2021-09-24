@@ -8,8 +8,9 @@ import time
 from collections import defaultdict
 from collections import Counter
 
+
 class Static_Bam:
-    def __init__(self,data_dir,results_dir,manual_sample_list,sample_list_dir,bp_min,cosmic_database):
+    def __init__(self,data_dir,results_dir,manual_sample_list,sample_list_dir,bp_min):
         #make sample list
         if manual_sample_list == False:
             cmd = f'ls -l {data_dir} | grep "^d"  | rev | cut -d " " -f 1 | rev &> sample_list.txt'
@@ -35,75 +36,39 @@ class Static_Bam:
             cmd = f'mkdir {self.result_dir}'
             subprocess.check_call(cmd,shell=True)
         
-        self.cosmic_database = cosmic_database
         self.data_dir = data_dir
         self.bp_min = bp_min
-        self.log = open("log.txt","w")
         
     def get_effective_position(self,sample_name):
-        """
-        two return values
-        1.
-        [pos1,pos2,pos3....]
-        default: bp>=50
-        2.
-        pos     name
-        pos1    name1
-        pos2    name2
-        pos3    name3
-        ......
-        """
         df_bed_file = pd.read_table(glob.glob(f"{self.data_dir}/{sample_name}/*Aligned.sortedByCoord.out.bed")[0],header=None)
+
         df_bed_file.loc[:,"len_bp"] = df_bed_file.iloc[:,2] - df_bed_file.iloc[:,1]
-        bed_file_position_filter = list(df_bed_file[df_bed_file.loc[:,"len_bp"] >= self.bp_min].iloc[:,1])
+        
+        bed_file_position_filter = df_bed_file[df_bed_file.loc[:,"len_bp"] >= self.bp_min]
+        
+        #get start end position
+        bed_file_pos_s = list(bed_file_position_filter.iloc[:,1])
+        bed_file_pos_e = list(bed_file_position_filter.iloc[:,2])
+        bed_file_chr = list(bed_file_position_filter.iloc[:,0])
+        
+        bed_file_position_message = (bed_file_chr,bed_file_pos_s,bed_file_pos_e)
         df_bed_file_position_name = df_bed_file.iloc[:,[1,3]]
+        
+        #get position name file
         df_bed_file_position_name.columns = ["position","name"]
 
-        return (bed_file_position_filter,df_bed_file_position_name)
-    
-    def get_cosmic_data(self):
-        #read the database and get the position of database
-        print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - Loading Database... (location: {self.cosmic_database})")
-        database = pd.read_table(self.cosmic_database,low_memory=False,header=None)
-        pos_database = set(database.iloc[:,1])
-        
-        try:
-            for sample in self.sample_names:
-                print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - Find the intersection with bed file.... . Sample: {sample}")
-                pos_effective = set(self.get_effective_position(sample_name = sample)[0])
-                pos_intersection = pos_effective.intersection(pos_database)
-                if len(pos_intersection) == 0:
-                    print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - No detect intersection with bed file.... . Sample: {sample}")
-                    self.log.write(f"{sample}\t No detect intersection\n")
-                else:
-                #get data 
-                    df_pos_intersection = database[database.iloc[:,1].isin(pos_intersection)]
-                    df_pos_intersection.to_csv(f"{self.result_dir}/{sample}_intersection_with_cosmic.tsv",sep = "\t",index=None)
-                    self.log.write(f"{sample}\t Find intersection sucess\n")
-        except:
-            self.log.write(f"{sample}\t Find intersection sucess Failture\n")
+        return (bed_file_position_message,df_bed_file_position_name)
 
     def get_cluster(self,sample_name):
-        """
-        barcode cluster
-        bar1    1
-        bar2    3
-        bar3    5
-        ......
-        """
         df_cluster_file = pd.read_table((glob.glob(f"{self.data_dir}/{sample_name}/*tsne_coord.tsv")[0]))
         df_cluster_file.rename(columns={'Unnamed: 0':'barcode'}, inplace = True)
         df_barcode_cluster = df_cluster_file.loc[:,["barcode","cluster"]]
         return df_barcode_cluster
     
     def gte_samfile(self,sample_name):
-        """
-        get the iter of samfile 
-        """
         bam_file = glob.glob(f"{self.data_dir}/{sample_name}/*filtered_sorted.bam")[0]
         #if index have
         if len(glob.glob(f"{self.data_dir}/{sample_name}/*.bai")) == 0:
-            print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - No detect the index of {sample_name} bam file")
             print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - Make index of {sample_name} bam file...")
             
             cmd = f"samtools index {bam_file}"
@@ -118,110 +83,121 @@ class Static_Bam:
         return samfile
     
     def get_cover_condition(self):
-        """
-        position barcode cluster    name
-        pos1     bar1    1          name1
-        pos2     bar2    2          name2
-        ......
-        """
-        try:
-            for sample in self.sample_names:
-                print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - Calculate the {sample}....")
-                samfile_sample = self.gte_samfile(sample_name = sample)
-                position_lst = self.get_effective_position(sample_name = sample)
-                cluster = self.get_cluster(sample_name = sample)
-                #make a  defaultdict to store data
-                position_barcode = defaultdict(list)
-                for reader in samfile_sample:
-                    try:
-                        barcode = reader.get_tag('CB')
-                        position_barcode["barcode"].append(barcode)
-                    except:
-                        position_barcode["UMI"].append("no_barcode")
-                    try:             
-                        umi = reader.get_tag('UB')
-                        position_barcode["UMI"].append(umi)
-                    except:
-                        position_barcode["UMI"].append("no_umi")
+        for sample in self.sample_names:
+            print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\t - Calculate the {sample}....")
+            samfile_sample = self.gte_samfile(sample_name = sample)
+            position_lst = self.get_effective_position(sample_name = sample)
+            position_name = position_lst[1]
+            cluster = self.get_cluster(sample_name = sample)
+
+            #make a  defaultdict to store data
+            position_barcode = defaultdict(list)
+            position_star_end = position_lst[0]
+
+            
+            #pysam fetch
+            for chr,start,end in zip(position_star_end[0],position_star_end[1],position_star_end[2]):
+                for readr in samfile_sample.fetch(str(chr),int(start),int(end)):
+                    length_overlap = readr.get_overlap(int(start),int(end))
+                    #print(readr.get_refernece_name())
+                    #length_overlap = readr.reference_length
+                    #length_overlap  = readr.query_alignment_length
+                    #length_overlap = readr.infer_query_length()
+                    #length_overlap = readr.infer_read_length()
+                    """
+                    https://pysam.readthedocs.io/_/downloads/en/latest/pdf/ 
+                    page 14
+                    get_overlap(self, uint32_t start, uint32_t end)
+                    return number of aligned bases of read overlapping the interval start and end on the reference sequence.
+                    Return None if cigar alignment is not available.
+                    """
+                    if length_overlap >= self.bp_min:
+                        #add position message
+                        position_barcode["chr"].append(str(chr))
+                        position_barcode["start"].append(int(start))
+                        position_barcode["end"].append(int(end))
+                        position_barcode["len_overlap"].append(int(length_overlap))
+                        try:
+                            barcode = readr.get_tag("CB")
+                            position_barcode["barcode"].append(barcode)
+                        except:
+                            position_barcode["barcode"].append("no_CB")
+                        try:
+                            position_barcode["UMI"].append(readr.get_tag("UB"))
+                        except:
+                            position_barcode["UMI"].append("no_UB")
+                        try:
+                            r_name = readr.query_name.split('_')[:2]
+                            r_name = "_".join(r_name)
+                            position_barcode["reads_name"].append(r_name)
+                        except:
+                            position_barcode["reads_name"].append("no_name")
+            
+            #position_barcode barcode umi dataframe
+            df_pos = pd.DataFrame(position_barcode)
+            #filter
+            df_pos = df_pos[df_pos.loc[:,"barcode"] != "no_CB"]
+            df_pos = df_pos[df_pos.loc[:,"UMI"] != "no_UB"]
+            df_pos = df_pos[df_pos.loc[:,"reads_name"] != "no_name"]
+            
+            #save message
+            umi_barcode_mesage = defaultdict(list)
+            #add cell
+            pos_start = position_star_end[1]
+            pos_end = position_star_end[2]
+            chr_s = position_star_end[0]
+            #print(df_pos)
+            
+            for chr,start,end in zip(chr_s,pos_start,pos_end):
+                df_pos_tmp = df_pos[(df_pos.loc[:,"start"] == start) & (df_pos.loc[:,"end"] == end) & (df_pos.loc[:,"chr"] == str(chr))]
+                #add position message
+                umi_barcode_mesage["chr"].append(str(chr))
+                umi_barcode_mesage["start"].append(start)
+                umi_barcode_mesage["end"].append(end)
                 
-                    try:
-                        gene_name = reader.get_tag('GN')
-                        position_barcode["gene"].append(gene_name)
-                    except:
-                        position_barcode["gene"].append("no_gene_name")  
+                #add cell
+                cell = Counter(list(df_pos_tmp.loc[:,"barcode"]))
+                umi_barcode_mesage["cell"].append(len(cell.keys()))
                 
-                    position_barcode["gene_len"].append(reader.query_length)
-                    position_barcode["position"].append(reader.reference_start)
-                #to dataframe  
-                position_barcode = pd.DataFrame(position_barcode)
-            
-                 #filter by gene_len
-                position_barcode = position_barcode[position_barcode.loc[:,"gene_len"] >= self.bp_min]
-
-                #filter by position
-                position_barcode = position_barcode[position_barcode.loc[:,"position"].isin(position_lst[0])]
-                #merge cluster and name
-                position_barcode_cluster = pd.merge(left=position_barcode,
-                                                    right=cluster,
-                                                    on = "barcode",
-                                                    how = "left").fillna("no_cluster")
-                position_barcode_cluster_name = pd.merge(left=position_barcode_cluster,
-                                                    right=position_lst[1],
-                                                    on = "position",
-                                                    how = "left").fillna("no_name")
-                #save data of position_barcode_cluster_name
-                data_save_colum = ["name","position","barcode","cluster"]
-                position_barcode_cluster_name.loc[:,data_save_colum].to_csv(f"{self.result_dir}/{sample}_position_barcode_cluster_name.tsv",sep = "\t",index=None)
-            
-           
-                #create a collection object to save the umi reads message
-                read_umi_message = defaultdict(list)
-            
-                 #get position list
-                pos_lst = set(position_barcode.loc[:,"position"])
-
-                for position in pos_lst:
-                    df_pos =  position_barcode[position_barcode.loc[:,"position"] == position]
-                    #add position
-                    read_umi_message["position"].append(position)
-
-                     #add cell
-                    cell = Counter(list(df_pos.loc[:,"barcode"]))
-                    read_umi_message["cell"].append(len(cell.keys()))
+                #add reads
+                reads = Counter(list(df_pos_tmp.loc[:,"reads_name"]))
+                umi_barcode_mesage["reads"].append(sum(reads.values()))
+                umi_barcode_mesage["medium_reads"].append(np.median(list(cell.values())))
                 
-                    #add medium_reads
-                    medium_reads = np.median(list(cell.values()))
-                    read_umi_message["medium_reads"].append(medium_reads)
+                #add umi
+                umi = Counter(list(df_pos_tmp.loc[:,"UMI"]))
+                umi_barcode_mesage["UMI"].append(len(umi.keys()))
+                umi_barcode_mesage["medium_UMI"].append(np.median(list(umi.values())))
+          
+            df_umi_barcode_mesage = pd.DataFrame(umi_barcode_mesage)
+            df_umi_barcode_mesage.loc[:,"mean_reads"] = df_umi_barcode_mesage.loc[:,"reads"] / df_umi_barcode_mesage.loc[:,"cell"]
+            df_umi_barcode_mesage.loc[:,"mean_UMI"] = df_umi_barcode_mesage.loc[:,"UMI"] / df_umi_barcode_mesage.loc[:,"cell"]
 
-                    #add UMI message
-                    umi = Counter(list(df_pos.loc[:,"UMI"]))
-                    read_umi_message["umi_number"].append(len(umi.keys()))
+            df_umi_barcode_mesage = pd.merge(left=df_umi_barcode_mesage,
+                                             right = position_name,
+                                             left_on = "start",
+                                             right_on ="position",
+                                             how = "left").drop("position",axis = 1).fillna(0)
+            cluster_message = pd.merge(left = df_pos,
+                                       right = cluster,
+                                       on = "barcode",
+                                        how = "left")
+            cluster_message = pd.merge(left = cluster_message,
+                                       right = position_name,
+                                       left_on = "start",
+                                       right_on="position",
+                                       how = "left").drop(["UMI","reads_name","position","len_overlap"],axis = 1)
+            cluster_message.to_csv(f"{self.result_dir}/{sample}_cluster_message.tsv",index=None,sep = "\t")
+            df_umi_barcode_mesage.to_csv(f"{self.result_dir}/{sample}_umi_barcode_mesage.tsv",index=None,sep = "\t")
 
-                    #add reads_number
-                    read_umi_message["reads_number"].append(sum(umi.values()))
 
-                    #add medium_umi
-                    medium_umi = np.median(list(umi.values()))
-                    #medium_umi = np.median(list(df_pos.groupby("barcode")["UMI"].value_counts()))
+
+
+
+            
+
                 
-                    read_umi_message["medium_umi"].append(medium_umi)
-            
-                df2_umi_reads_message = pd.DataFrame(read_umi_message)
-                #add mean_reads
-                df2_umi_reads_message.loc[:,"mean_reads"] = df2_umi_reads_message.loc[:,"reads_number"] / df2_umi_reads_message.loc[:,"cell"]
-            
-                #add mean_umis
-                df2_umi_reads_message.loc[:,"mean_umi"] = df2_umi_reads_message.loc[:,"umi_number"] / df2_umi_reads_message.loc[:,"cell"]
-            
-                #add name
-                df2_umi_reads_message = pd.merge(left = df2_umi_reads_message,
-                                                    right = position_lst[1],
-                                                    on = "position",
-                                                    how = "left")
 
-                #save data
-                sort_index = ["position","name","cell","reads_number","umi_number","mean_reads","mean_umi","medium_reads","medium_umi"]
-                df2_umi_reads_message.loc[:,sort_index].to_csv(f"{self.result_dir}/{sample}_umi_reads_message.tsv",sep = "\t",index=None)
-                self.log.write(f"{sample}\t Sucess\n")
-        except:
-            self.log.write(f"{sample}\t Failture\n")
+
+
+
