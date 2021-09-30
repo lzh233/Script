@@ -27,7 +27,7 @@ class Sumarrize_Variant:
             dup = dict(Counter(self.sample_names))
             dup_lst = [dup_name for dup_name,value in dup.items() if value > 1]
             dup_lst = " ".join(dup_lst)
-            print(f"\n WARNING: Your sample name list have duplicate name, Please Check!\n Duplicate name is {dup_lst}\n")
+            print(f"\nWARNING: Your sample name list have duplicate name, Please Check!\nDuplicate name is {dup_lst}\n")
 
         self.data_dir = data_dir
         self.results_dir = results_dir
@@ -39,11 +39,22 @@ class Sumarrize_Variant:
         CID cluster
         1   1
         2   5
-        3   no_cluster
+        3   4
         ......
+        This cluster message is from the celescop rna results !!
         """
-        df_file = pd.read_table(glob.glob(f"{self.data_dir}/{sample_name}/08.analysis_snp/*_count_tsne.tsv")[0])
-        cid2cluster = df_file.loc[:,["CID","cluster"]]
+        barcode_cid_file = pd.read_table(glob.glob(f"{self.data_dir}/{sample_name}/*_tsne_coord.tsv")[0])
+        barcode_cid_file.columns = ["barcode","tSNE_1","tSNE_2" ,"cluster" ,"Gene_Counts"]
+        barcode_cid_file = barcode_cid_file.loc[:,["barcode","cluster"]]
+
+        #read CID file
+        cid_barcode_file = pd.read_table(glob.glob(f"{self.data_dir}/{sample_name}/07.variant_calling/*_CID.tsv")[0]).loc[:,["CID","barcode"]]
+        
+        cid2cluster = pd.merge(left = barcode_cid_file,
+                               right = cid_barcode_file,
+                               on = "barcode",
+                               how = "left")
+        cid2cluster = cid2cluster.loc[:,["CID","cluster"]] 
         return cid2cluster
     
     def get_filter_variant_data(self,sample_name):
@@ -101,7 +112,6 @@ class Sumarrize_Variant:
                                                 right=cid_cluster, 
                                                 on = "CID",
                                                 how = "left").fillna("no_cluster")
-                
                 #get vid and cluster 
                 vid_set = set(variant_with_cluster.loc[:,"VID"])
                 cluster_set = set(variant_with_cluster.loc[:,"cluster"])
@@ -145,5 +155,3 @@ class Sumarrize_Variant:
                     self.log.write(f"{sample}\tSuccess\n")
             except:
                 self.log.write(f"{sample}\tFailure\n")
-
-
