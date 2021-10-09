@@ -155,3 +155,5 @@ class Sumarrize_Variant:
                     self.log.write(f"{sample}\tSuccess\n")
             except:
                 self.log.write(f"{sample}\tFailure\n")
+
+
