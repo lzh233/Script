@@ -2,7 +2,7 @@ from collections import defaultdict
 import pysam
 import numpy as np
 
-#构建count_dict
+#构建count_dict。
 def genDict(dim=3, valType=int):
     if dim == 1:
         return defaultdict(valType)
